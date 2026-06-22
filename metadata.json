@@ -1,0 +1,6 @@
+{
+  "name": "E-Rank Dungeon - Ngôi Nhà Hạnh Phúc",
+  "description": "Giao diện và hệ thống Boss, phòng chơi E-Rank Dungeon - Ngôi Nhà Hạnh Phúc",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
