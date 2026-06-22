@@ -830,18 +830,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // --- Delete room (by Boss) ---
   const deleteRoom = async (roomCode: string) => {
+    // Perform local cleanup first for instantaneous UI update & redirection
+    deleteRoomLocal(roomCode);
+
     if (isFirebaseActive && firestore) {
       try {
         const roomRef = doc(firestore, "rooms", roomCode);
         await deleteDoc(roomRef);
       } catch (error: any) {
-        console.error("Firebase deleteRoom failed, falling back to local mode:", error);
+        console.error("Firebase deleteRoom failed, fallback was already processed locally:", error);
         setFirebaseError(error.message || String(error));
-        setIsFirebaseActive(false);
-        deleteRoomLocal(roomCode);
       }
-    } else {
-      deleteRoomLocal(roomCode);
     }
   };
 

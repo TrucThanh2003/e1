@@ -303,93 +303,9 @@ function GameApp() {
                     )}
                   </p>
                   
-                  {isBoss && isEditingCode ? (
-                    <div className="mt-1 flex flex-col items-end gap-1 z-20 relative">
-                      <div className="flex items-center gap-1 bg-[#101b2f] border border-[#2c538c] rounded px-1.5 py-0.5">
-                        <input
-                          type="text"
-                          value={newRoomCode}
-                          onChange={(e) => setNewRoomCode(e.target.value.toUpperCase())}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSaveRoomCode();
-                            if (e.key === "Escape") setIsEditingCode(false);
-                          }}
-                          className="bg-transparent text-white font-mono text-xs w-20 outline-none focus:ring-0 uppercase placeholder-slate-600"
-                          placeholder="E..."
-                          maxLength={15}
-                          autoFocus
-                        />
-                        <button
-                          onClick={handleSaveRoomCode}
-                          className="p-1 hover:text-emerald-400 text-slate-400 transition-colors"
-                          title={translations.save}
-                        >
-                          <Check className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => setIsEditingCode(false)}
-                          className="p-1 hover:text-red-400 text-slate-400 transition-colors"
-                          title={translations.cancel}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                      {codeEditError && (
-                        <span className="text-[9px] text-red-400 bg-red-950/40 px-1.5 py-0.5 border border-red-900/30 rounded font-mono block max-w-[150px] text-right">
-                          {codeEditError}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 mt-1 z-20 relative">
-                      {/* Quick Lock/Unlock for Boss inside Lobby (Only visible to Boss) */}
-                      {isBoss && (
-                        <button
-                          onClick={() => toggleRoomLock(currentRoom.id, currentRoom.status)}
-                          className={`p-1 px-1.5 rounded border text-[10px] uppercase font-bold transition-all flex items-center justify-center gap-0.5 hover:bg-opacity-80 ${
-                            currentRoom.status === "locked"
-                              ? "bg-emerald-950/40 border-emerald-900/40 text-emerald-400"
-                              : "bg-red-950/40 border-red-900/40 text-[#ff4a5a]"
-                          }`}
-                          title={currentRoom.status === "locked" ? translations.unlockRoom : translations.lockRoom}
-                        >
-                          {currentRoom.status === "locked" ? (
-                            <>
-                              <Unlock className="w-3 h-3" />
-                              <span className="text-[8px] tracking-tight">{translations.unlockRoom}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="w-3 h-3" />
-                              <span className="text-[8px] tracking-tight">{translations.lockRoom}</span>
-                            </>
-                          )}
-                        </button>
-                      )}
-
-                      <div className="flex items-center gap-1">
-                        <p className="font-mono text-base font-black text-[#45f3ff]">{currentRoom.id}</p>
-                        {isBoss ? (
-                          currentRoom.status !== "locked" ? (
-                            <button
-                              onClick={startEditingCode}
-                              className="p-1 hover:bg-[#1a2f4c] rounded text-[#9ca3af] hover:text-[#45f3ff] transition-all"
-                              title={translations.editRoomCode}
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                          ) : (
-                            <span 
-                              className="p-1 text-slate-600 cursor-not-allowed" 
-                              title={translations.roomLockedCannotEdit}
-                            >
-                              <Edit3 className="w-3 h-3 opacity-30" />
-                            </span>
-                          )
-                        ) : null}
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mt-1 z-20 relative">
+                    <p className="font-mono text-base font-black text-[#45f3ff]">{currentRoom.id}</p>
+                  </div>
                 </div>
               </div>
 
@@ -410,36 +326,6 @@ function GameApp() {
                   <Info className="w-3 h-3 text-[#3b82f6] shrink-0" />
                   {translations.playerCountGuide}
                 </p>
-              </div>
-            </div>
-
-            {/* Simulated clone controller (Sandboxed Sandbox player tool is vital) */}
-            <div className="p-3 bg-[#0d1424] border border-dashed border-[#233f67] rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-[#9cbfdd] font-semibold">
-                  <Sparkles className="w-4 h-4 text-[#45f3ff] animate-pulse" />
-                  <span>{translations.botPanel}</span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={addSimulatedBotPlayer}
-                    disabled={!isBoss || currentRoom.players.length >= 12}
-                    className="flex items-center gap-1 text-[10px] font-bold uppercase p-1.5 px-2 bg-[#1c305a] hover:bg-[#284683] text-[#45f3ff] rounded border border-[#2b4c8d] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                    title={!isBoss ? (language === "vi" ? "Chỉ dành cho Boss" : "Boss Only") : ""}
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    {translations.addBot}
-                  </button>
-                  <button
-                    onClick={clearSimulatedPlayers}
-                    disabled={!isBoss}
-                    className="flex items-center gap-1 text-[10px] font-bold uppercase p-1.5 px-2 bg-[#2d1a22] hover:bg-[#462431] text-[#ff4a5a] rounded border border-[#502836] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                    title={!isBoss ? (language === "vi" ? "Chỉ dành cho Boss" : "Boss Only") : ""}
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    {translations.clearBots}
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -580,22 +466,7 @@ function GameApp() {
                 </button>
               )}
 
-              {/* Boss Dashboard toggler button (Visible to everyone, disabled if not Boss) */}
-              <button
-                onClick={async () => {
-                  if (isBoss) {
-                    await leaveRoom();
-                    setIsBossDashboardOpen(true);
-                  }
-                }}
-                disabled={!isBoss}
-                className="py-2.5 px-4 rounded-lg bg-[#0d1017] hover:bg-[#161d2b] text-slate-300 disabled:text-slate-600 border border-[#1d2d44]/60 disabled:border-slate-900 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                id="btn_lobby_dashboard_link"
-                title={!isBoss ? (language === "vi" ? "Chỉ dành cho Boss mới có thể bấm" : "Only the Boss can open the dashboard") : ""}
-              >
-                <LayoutDashboard className="w-4 h-4 text-[#ff2e63]" />
-                <span>{language === "vi" ? "Bảng Điều Khiển (Boss Only)" : "Boss Dashboard"}</span>
-              </button>
+
 
               {/* Rời phòng button */}
               <button
