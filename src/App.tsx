@@ -73,6 +73,38 @@ function GameApp() {
   const [newRoomCode, setNewRoomCode] = useState("");
   const [codeEditError, setCodeEditError] = useState("");
 
+  // Create Room custom states
+  const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
+  const [createRoomName, setCreateRoomName] = useState("");
+  const [createRoomDuration, setCreateRoomDuration] = useState<number>(45);
+  const [createRoomMode, setCreateRoomMode] = useState<"public" | "private">("public");
+
+  const generateRandomRoomName = () => {
+    const prefixes = [language === "vi" ? "Mê Cung" : "Dungeon", language === "vi" ? "Hầm Ngục" : "Crypt", language === "vi" ? "Lâu Đài" : "Castle", language === "vi" ? "Pháo Đài" : "Fortress", language === "vi" ? "Vực Sâu" : "Abyss", language === "vi" ? "Sảnh Đường" : "Sanctuary", language === "vi" ? "Tế Đàn" : "Altar"];
+    const names = [language === "vi" ? "Tối Thượng" : "Ultimate", language === "vi" ? "Ngôi Nhà Hạnh Phúc" : "Happy House", language === "vi" ? "Hắc Ám" : "Shadows", language === "vi" ? "Vô Tận" : "Infinity", language === "vi" ? "Sương Mù" : "Mist", language === "vi" ? "Hồng Ngọc" : "Ruby", language === "vi" ? "Bão Táp" : "Storm", language === "vi" ? "Ký Ức" : "Memory"];
+    const suffix = Math.floor(100 + Math.random() * 900);
+    const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const n = names[Math.floor(Math.random() * names.length)];
+    return `${p} ${n} #${suffix}`;
+  };
+
+  const openCreateRoomFlow = () => {
+    setCreateRoomName(generateRandomRoomName());
+    setCreateRoomDuration(45);
+    setCreateRoomMode("public");
+    setShowCreateRoomModal(true);
+  };
+
+  const handleCreateRoomConfirm = async () => {
+    try {
+      const name = createRoomName.trim() || generateRandomRoomName();
+      await createRoom(name, createRoomDuration, createRoomMode);
+      setShowCreateRoomModal(false);
+    } catch (err: any) {
+      console.error("Create Room failed:", err);
+    }
+  };
+
   // Sync profile name input with player state
   useEffect(() => {
     if (player) {
@@ -289,18 +321,32 @@ function GameApp() {
                     <span>{translations.lobbyTitle}</span>
                   </div>
                   <h2 className="text-xl font-black mt-1 tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-[#f3f4f6] to-[#9ca3af]">
-                    Ngôi Nhà Hạnh Phúc
+                    {currentRoom.name || "Ngôi Nhà Hạnh Phúc"}
                   </h2>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-[#0b1728] border border-blue-950 text-blue-400 flex items-center gap-0.5 shrink-0">
+                      ⏱️ {currentRoom.duration || 45}P
+                    </span>
+                    <span className={`text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded border flex items-center gap-0.5 shrink-0 ${
+                      currentRoom.mode === "private" 
+                        ? "bg-purple-950/40 border-purple-900/40 text-purple-400" 
+                        : "bg-emerald-950/40 border-emerald-900/40 text-emerald-400"
+                    }`}>
+                      {currentRoom.mode === "private" ? (language === "vi" ? "Riêng tư" : "Private") : (language === "vi" ? "Công khai" : "Public")}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="p-2 px-3 rounded text-right bg-[#070b14] border border-[#1a2f4c] flex flex-col items-end">
                   <p className="text-[9px] text-[#9ca3af] uppercase tracking-wider flex items-center gap-1">
                     {translations.room}
-                    {currentRoom.status === "locked" ? (
-                      <span className="text-red-500 font-mono text-[9px] uppercase font-bold tracking-tight bg-red-950/40 px-1 border border-red-900/40 rounded-sm">LOCKED</span>
-                    ) : (
-                      <span className="text-emerald-400 font-mono text-[9px] uppercase font-bold tracking-tight bg-emerald-950/40 px-1 border border-emerald-900/40 rounded-sm">OPEN</span>
-                    )}
+                    <span className={`font-mono text-[9px] uppercase font-bold tracking-tight px-1 py-0.5 border rounded-sm ${
+                      currentRoom.status === "locked" 
+                        ? "text-[#ff4a5a] bg-red-950/40 border-red-900/40" 
+                        : "text-emerald-400 bg-emerald-950/40 border-emerald-900/40"
+                    }`}>
+                      {currentRoom.status === "locked" ? "LOCKED" : "OPEN"}
+                    </span>
                   </p>
                   
                   <div className="flex items-center gap-2 mt-1 z-20 relative">
@@ -513,7 +559,7 @@ function GameApp() {
                   <p className="text-[9px] text-slate-500 font-mono mt-0.5">Consecutive Room ID generation Engine</p>
                 </div>
                 <button
-                  onClick={createRoom}
+                  onClick={openCreateRoomFlow}
                   className="bg-[#ff1e42] hover:bg-[#ff415d] text-white p-2.5 px-4 font-bold rounded-lg text-xs uppercase tracking-wider transition-all border border-[#ff4e6a] shadow-[0_0_15px_rgba(255,30,66,0.3)] hover:scale-105 active:scale-95"
                   id="btn_boss_create_room"
                 >
@@ -546,10 +592,27 @@ function GameApp() {
                             <p className="font-mono text-xs font-bold text-[#45f3ff] shrink-0">{room.id}</p>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-slate-300">
-                              {translations.currentPlayers}: <span className="text-[#45f3ff] font-mono">{room.players.length} / 12</span>
+                            <p className="text-xs font-bold text-slate-100 uppercase tracking-wide">
+                              {room.name || `Dungeon ${room.id}`}
                             </p>
-                            <p className="text-[9px] text-slate-500 flex items-center gap-1 mt-0.5">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-400 mt-1">
+                              <span>
+                                {translations.currentPlayers}: <span className="text-[#45f3ff] font-mono font-bold">{room.players.length}/12</span>
+                              </span>
+                              <span className="text-slate-800">•</span>
+                              <span className="font-mono text-[#38bdf8]">
+                                ⏱️ {room.duration || 45}P
+                              </span>
+                              <span className="text-slate-800">•</span>
+                              <span className={`text-[8px] uppercase tracking-wider font-extrabold px-1.5 py-0.2 rounded border ${
+                                room.mode === "private" 
+                                  ? "bg-purple-950/40 border-purple-900/40 text-purple-400" 
+                                  : "bg-emerald-950/40 border-emerald-900/40 text-emerald-400"
+                              }`}>
+                                {room.mode === "private" ? "PRIVATE" : "PUBLIC"}
+                              </span>
+                            </div>
+                            <p className="text-[9px] text-slate-500 flex items-center gap-1 mt-1.5">
                               <span className={`w-1.5 h-1.5 rounded-full ${room.status === "open" ? "bg-emerald-500" : "bg-red-500"}`}></span>
                               {room.status === "locked" ? translations.roomLocked : (language === "vi" ? "Chờ dũng giả gia nhập..." : "Open lobby awaiting...")}
                             </p>
@@ -581,19 +644,6 @@ function GameApp() {
                       </div>
 
                       <div className="flex gap-2">
-                        {/* Lock / Unlock */}
-                        <button
-                          onClick={() => toggleRoomLock(room.id, room.status)}
-                          className={`p-2 rounded border text-xs transition-colors flex items-center justify-center ${
-                            room.status === "locked"
-                              ? "bg-[#112519] border-[#224b33] text-emerald-400 hover:bg-[#183524]" 
-                              : "bg-[#251111] border-[#4b2222] text-[#ff4a5a] hover:bg-[#351818]"
-                          }`}
-                          title={room.status === "locked" ? translations.unlockRoom : translations.lockRoom}
-                        >
-                          {room.status === "locked" ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                        </button>
-
                         {/* Join Lobby to test as Player / Overseer */}
                         <button
                           onClick={async () => {
@@ -887,6 +937,134 @@ function GameApp() {
                   id="btn_save_profile_nickname"
                 >
                   {translations.save}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Room Modal */}
+      {showCreateRoomModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
+          <div className="bg-[#0b0f19] border border-red-950 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.85)] w-full max-w-md p-6 overflow-hidden relative">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-teal-500 via-[#45f3ff] to-[#ff2e63] animate-[pulse_2s_infinite]"></div>
+            
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-black uppercase text-[#45f3ff] tracking-wider flex items-center gap-2">
+                <Skull className="w-4 h-4 text-[#45f3ff]" />
+                {language === "vi" ? "Bảng Khởi Tạo Phòng" : "Room Initialization Chamber"}
+              </h3>
+              <button 
+                onClick={() => setShowCreateRoomModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {/* Room Name field */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex justify-between items-center">
+                  <span>{language === "vi" ? "Tên phòng" : "Room Name"}</span>
+                  <button 
+                    type="button"
+                    onClick={() => setCreateRoomName(generateRandomRoomName())}
+                    className="text-[10px] text-[#45f3ff] hover:text-[#45f3ff]/80 transition-colors flex items-center gap-1 font-mono uppercase bg-[#162a3f] px-2 py-0.5 border border-[#21435e] rounded"
+                    title={language === "vi" ? "Tạo tên ngẫu nhiên" : "Generate random"}
+                  >
+                    <span>↺</span> Random
+                  </button>
+                </label>
+                <input
+                  type="text"
+                  value={createRoomName}
+                  onChange={(e) => setCreateRoomName(e.target.value)}
+                  placeholder={language === "vi" ? "Nhập tên phòng..." : "Enter custom name..."}
+                  maxLength={35}
+                  className="w-full bg-[#05070a] border border-slate-800 text-[#f3f4f6] text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-[#45f3ff]/80 font-bold focus:ring-1 focus:ring-[#45f3ff]/30 text-slate-200"
+                />
+              </div>
+
+              {/* Duration Select field */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {language === "vi" ? "Thời gian chơi" : "Duration limit"}
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[35, 45, 60, 120].map((mins) => (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => setCreateRoomDuration(mins)}
+                      className={`py-2 text-xs font-bold font-mono rounded-lg border transition-all ${
+                        createRoomDuration === mins
+                          ? "bg-[#ff1e42] text-white border-[#ff1e42] shadow-[0_0_10px_rgba(255,30,66,0.25)] scale-[1.02]"
+                          : "bg-[#05070a] border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                      }`}
+                    >
+                      {mins} {language === "vi" ? "PHÚT" : "MINS"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Game Mode Selector */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  {language === "vi" ? "Chế độ phòng" : "Room mode"}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCreateRoomMode("public")}
+                    className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                      createRoomMode === "public"
+                        ? "bg-[#112d26] border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+                        : "bg-[#05070a] border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                    }`}
+                  >
+                    <span className="text-xs font-black font-sans uppercase tracking-wider">
+                      {language === "vi" ? "CÔNG KHAI" : "PUBLIC"}
+                    </span>
+                    <span className="text-[9px] text-slate-500">
+                      {language === "vi" ? "Ai cũng có thể thấy" : "Visible to anyone"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreateRoomMode("private")}
+                    className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                      createRoomMode === "private"
+                        ? "bg-[#2d112b] border-purple-500 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.15)]"
+                        : "bg-[#05070a] border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                    }`}
+                  >
+                    <span className="text-xs font-black font-sans uppercase tracking-wider">
+                      {language === "vi" ? "RIÊNG TƯ" : "PRIVATE"}
+                    </span>
+                    <span className="text-[9px] text-slate-500">
+                      {language === "vi" ? "Không hiện ở danh sách" : "Hidden from global lists"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateRoomModal(false)}
+                  className="flex-1 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors hover:bg-slate-700"
+                >
+                  {language === "vi" ? "Hủy bỏ" : "Cancel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateRoomConfirm}
+                  className="flex-1 bg-[#ff1e42] hover:bg-[#ff415d] text-white py-2.5 font-bold rounded-lg text-xs uppercase tracking-wider transition-all border border-[#ff4e6a] shadow-[0_0_15px_rgba(255,30,66,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {language === "vi" ? "Xác nhận tạo" : "Instantiate"}
                 </button>
               </div>
             </div>

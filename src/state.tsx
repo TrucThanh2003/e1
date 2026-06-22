@@ -36,6 +36,9 @@ export interface Room {
   status: "open" | "locked";
   createdAt: number;
   players: Player[];
+  name?: string;
+  duration?: number;
+  mode?: "public" | "private";
 }
 
 export interface GameContextType {
@@ -54,7 +57,7 @@ export interface GameContextType {
   updateNickname: (name: string) => Promise<void>;
   bossLogin: (key: string) => Promise<boolean>;
   bossLogout: () => void;
-  createRoom: () => Promise<string>;
+  createRoom: (name?: string, duration?: number, mode?: "public" | "private") => Promise<string>;
   joinRoom: (roomCode: string, name: string) => Promise<Room>;
   leaveRoom: () => Promise<void>;
   toggleReady: () => Promise<void>;
@@ -509,7 +512,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   // --- Creating sequential room: E0001, E0002... ---
-  const createRoom = async (): Promise<string> => {
+  const createRoom = async (name?: string, duration?: number, mode?: "public" | "private"): Promise<string> => {
     const createRoomLocal = () => {
       const { rooms, counter } = loadLocalRooms();
       const nextCounter = counter + 1;
@@ -519,7 +522,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         id: roomCode,
         status: "open",
         createdAt: Date.now(),
-        players: []
+        players: [],
+        name: name || `Dungeon ${roomCode}`,
+        duration: duration || 45,
+        mode: mode || "public"
       };
 
       const updatedRooms = [...rooms, newRoom];
@@ -550,7 +556,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
             id: roomCode,
             status: "open",
             createdAt: Date.now(),
-            players: []
+            players: [],
+            name: name || `Dungeon ${roomCode}`,
+            duration: duration || 45,
+            mode: mode || "public"
           };
           
           transaction.set(roomDocRef, newRoom);
@@ -590,7 +599,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
             id: roomCode,
             status: "open",
             createdAt: Date.now(),
-            players: []
+            players: [],
+            name: name || `Dungeon ${roomCode}`,
+            duration: duration || 45,
+            mode: mode || "public"
           };
           await setDoc(doc(firestore, "rooms", roomCode), newRoom);
           await setDoc(counterDocRef, { value: count });
